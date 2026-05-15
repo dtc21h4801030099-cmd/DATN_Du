@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -12,7 +13,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    ANTHROPIC_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+
+    @field_validator("GEMINI_API_KEY", mode="before")
+    @classmethod
+    def strip_api_key(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
 
     class Config:
         env_file = ".env"

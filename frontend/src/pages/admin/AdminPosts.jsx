@@ -8,13 +8,16 @@ export default function AdminPosts() {
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
+  const [viewing, setViewing] = useState(null)
   const [error, setError] = useState('')
 
-  const fetch = () => api.get('/posts').then((r) => setPosts(r.data)).catch(() => {})
-  useEffect(() => { fetch() }, [])
+  const fetchPosts = () => api.get('/posts').then((r) => setPosts(r.data)).catch(() => {})
+  useEffect(() => { fetchPosts() }, [])
 
   const openCreate = () => { setForm(empty); setEditing(null); setShowForm(true); setError('') }
   const openEdit = (p) => { setForm({ title: p.title, content: p.content, type: p.type }); setEditing(p.id); setShowForm(true); setError('') }
+  const openView = (p) => setViewing(p)
+  const closeView = () => setViewing(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -23,7 +26,7 @@ export default function AdminPosts() {
       if (editing) await api.put(`/posts/${editing}`, form)
       else await api.post('/posts', form)
       setShowForm(false)
-      fetch()
+      fetchPosts()
     } catch (err) {
       setError(err.response?.data?.detail || 'Lỗi lưu bài viết')
     }
@@ -32,10 +35,14 @@ export default function AdminPosts() {
   const handleDelete = async (id) => {
     if (!confirm('Xóa bài viết này?')) return
     await api.delete(`/posts/${id}`)
-    fetch()
+    fetchPosts()
   }
 
   const typeLabel = { news: 'Tin tức', notice: 'Thông báo' }
+  const typeBadge = {
+    notice: 'bg-yellow-100 text-yellow-700',
+    news: 'bg-blue-100 text-blue-700',
+  }
 
   return (
     <div>
@@ -76,19 +83,23 @@ export default function AdminPosts() {
 
       <div className="space-y-3">
         {posts.map((p) => (
-          <div key={p.id} className="card">
+          <div
+            key={p.id}
+            className="card cursor-pointer hover:shadow-md hover:border-blue-200 transition-all"
+            onClick={() => openView(p)}
+          >
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${p.type === 'notice' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {typeLabel[p.type]}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${typeBadge[p.type] || 'bg-gray-100 text-gray-600'}`}>
+                    {typeLabel[p.type] || p.type}
                   </span>
                   <span className="text-xs text-gray-400">{new Date(p.published_at).toLocaleDateString('vi-VN')}</span>
                 </div>
                 <p className="font-semibold">{p.title}</p>
                 <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.content}</p>
               </div>
-              <div className="flex gap-2 ml-4">
+              <div className="flex gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => openEdit(p)} className="btn-secondary text-sm py-1">Sửa</button>
                 <button onClick={() => handleDelete(p.id)} className="btn-danger text-sm py-1">Xóa</button>
               </div>
@@ -96,6 +107,40 @@ export default function AdminPosts() {
           </div>
         ))}
       </div>
+
+      {/* Detail Modal */}
+      {viewing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeView}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start p-6 border-b">
+              <div className="flex-1 pr-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${typeBadge[viewing.type] || 'bg-gray-100 text-gray-600'}`}>
+                    {typeLabel[viewing.type] || viewing.type}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(viewing.published_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{viewing.title}</h2>
+              </div>
+              <button onClick={closeView} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-800 whitespace-pre-line leading-relaxed">{viewing.content}</p>
+            </div>
+
+            <div className="flex gap-2 p-6 pt-0">
+              <button onClick={() => { closeView(); openEdit(viewing) }} className="btn-primary text-sm">Sửa</button>
+              <button onClick={closeView} className="btn-secondary text-sm">Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

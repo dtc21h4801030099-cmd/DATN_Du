@@ -10,18 +10,6 @@ export default function Chat() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    api.get('/chatbot/history').then((r) => {
-      const history = r.data
-        .reverse()
-        .flatMap((h) => [
-          { role: 'user', text: h.message, time: h.created_at },
-          { role: 'ai', text: h.response, time: h.created_at },
-        ])
-      setMessages(history)
-    }).catch(() => {})
-  }, [])
-
-  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
@@ -53,8 +41,7 @@ export default function Chat() {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center text-gray-400 mt-10">
-              <p className="text-4xl mb-2">🤖</p>
-              <p>Xin chào! Tôi là trợ lý tư vấn tuyển sinh DUTA.</p>
+                <p>Xin chào! Tôi là trợ lý tư vấn tuyển sinh DUTA.</p>
               <p className="text-sm mt-1">Hãy hỏi tôi về ngành học, điểm chuẩn hoặc trường đại học.</p>
             </div>
           )}

@@ -14,12 +14,12 @@ export default function Navbar() {
     <nav className="bg-blue-700 text-white shadow-md">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to={user ? '/home' : '/login'} className="text-xl font-bold tracking-wide">
-          🎓 DUTAS
+          DUTA
         </Link>
 
         <div className="flex items-center gap-6 text-sm">
           <Link to="/majors" className="hover:text-blue-200 transition-colors">Ngành học</Link>
-          <Link to="/universities" className="hover:text-blue-200 transition-colors">Trường ĐH</Link>
+          <Link to="/universities" className="hover:text-blue-200 transition-colors">Trường Đại học</Link>
           <Link to="/posts" className="hover:text-blue-200 transition-colors">Thông báo</Link>
 
           {user ? (
@@ -40,7 +40,7 @@ export default function Navbar() {
               </div>
             </>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Link to="/login" className="hover:text-blue-200 transition-colors">Đăng nhập</Link>
               <Link to="/register" className="bg-white text-blue-700 px-3 py-1 rounded-lg font-medium hover:bg-blue-50 transition-colors">
                 Đăng ký

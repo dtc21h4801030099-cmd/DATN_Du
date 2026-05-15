@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class MajorCreate(BaseModel):
@@ -7,9 +7,23 @@ class MajorCreate(BaseModel):
     code: str | None = None
     description: str | None = None
     subject_group: str | None = None
-    benchmark: float | None = None
-    quota: int | None = None
+    benchmark: float
+    quota: int
     university_id: int
+
+    @field_validator('benchmark')
+    @classmethod
+    def validate_benchmark(cls, v):
+        if v < 0 or v > 30:
+            raise ValueError('Điểm chuẩn phải nằm trong khoảng 0 đến 30')
+        return v
+
+    @field_validator('quota')
+    @classmethod
+    def validate_quota(cls, v):
+        if v < 0:
+            raise ValueError('Chỉ tiêu không được âm')
+        return v
 
 
 class MajorUpdate(BaseModel):
@@ -20,6 +34,13 @@ class MajorUpdate(BaseModel):
     benchmark: float | None = None
     quota: int | None = None
     university_id: int | None = None
+
+    @field_validator('benchmark')
+    @classmethod
+    def validate_benchmark(cls, v):
+        if v is not None and (v < 0 or v > 30):
+            raise ValueError('Điểm chuẩn phải nằm trong khoảng 0 đến 30')
+        return v
 
 
 class MajorOut(BaseModel):
@@ -38,3 +59,4 @@ class MajorOut(BaseModel):
 
 class MajorWithUniversity(MajorOut):
     university_name: str | None = None
+    approved_count: int = 0

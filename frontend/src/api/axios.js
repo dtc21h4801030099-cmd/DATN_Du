@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api' })
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem('token')
@@ -11,14 +11,22 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Chỉ tự logout khi /auth/me trả 401 (token hết hạn thật sự)
-    // Không logout khi API data trả 401/403 để tránh kick oan
-    const isAuthCheck = err.config?.url?.includes('/auth/me')
-    if (err.response?.status === 401 && isAuthCheck) {
+    const status = err.response?.status
+    const detail = err.response?.data?.detail
+
+    const hasToken = !!sessionStorage.getItem('token')
+    if (status === 401 && hasToken) {
       sessionStorage.removeItem('token')
       sessionStorage.removeItem('user')
-      window.location.href = '/login'
+      window.dispatchEvent(new Event('auth:expired'))
     }
+
+    if (status === 403 && detail === 'Tài khoản đã bị khóa') {
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('user')
+      window.dispatchEvent(new Event('auth:expired'))
+    }
+
     return Promise.reject(err)
   },
 )

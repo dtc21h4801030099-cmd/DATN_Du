@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import api from '../api/axios'
 
 const AuthContext = createContext(null)
 
@@ -11,6 +12,30 @@ export function AuthProvider({ children }) {
       return null
     }
   })
+
+  // true only when there's a token that needs server-side validation
+  const [isLoading, setIsLoading] = useState(() => !!sessionStorage.getItem('token'))
+
+  useEffect(() => {
+    if (!sessionStorage.getItem('token')) return
+    api.get('/auth/me')
+      .then(({ data }) => {
+        sessionStorage.setItem('user', JSON.stringify(data))
+        setUser(data)
+      })
+      .catch(() => {
+        sessionStorage.removeItem('token')
+        sessionStorage.removeItem('user')
+        setUser(null)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const handleExpired = () => setUser(null)
+    window.addEventListener('auth:expired', handleExpired)
+    return () => window.removeEventListener('auth:expired', handleExpired)
+  }, [])
 
   const login = (token, userData) => {
     sessionStorage.setItem('token', token)
@@ -25,7 +50,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider value={{ user, login, logout, isAdmin: user?.role === 'admin', isLoading }}>
       {children}
     </AuthContext.Provider>
   )

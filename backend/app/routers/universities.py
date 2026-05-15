@@ -5,6 +5,8 @@ from typing import List
 from app.core.deps import get_db, require_admin
 from app.models.user import User
 from app.models.university import University
+from app.models.major import Major
+from app.models.registration import MajorRegistration
 from app.schemas.university import UniversityCreate, UniversityUpdate, UniversityOut
 
 router = APIRouter(prefix="/universities", tags=["Universities"])
@@ -67,5 +69,9 @@ def delete_university(
     uni = db.query(University).filter(University.id == uni_id).first()
     if not uni:
         raise HTTPException(status_code=404, detail="Không tìm thấy trường đại học")
+    major_ids = [m.id for m in db.query(Major.id).filter(Major.university_id == uni_id).all()]
+    if major_ids:
+        db.query(MajorRegistration).filter(MajorRegistration.major_id.in_(major_ids)).delete(synchronize_session=False)
+        db.query(Major).filter(Major.university_id == uni_id).delete(synchronize_session=False)
     db.delete(uni)
     db.commit()

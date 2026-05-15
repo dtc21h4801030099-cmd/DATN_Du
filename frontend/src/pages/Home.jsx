@@ -12,28 +12,23 @@ export default function Home() {
   return (
     <div>
       {/* Hero */}
-      <section className="text-center py-16">
+      <section className="text-center py-8">
         <h1 className="text-4xl font-bold text-blue-700 mb-4">
           Nền tảng Tư vấn & Tuyển sinh Đại học
         </h1>
         <p className="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
           Tra cứu ngành học, trường đại học và được tư vấn 24/7 bởi AI Chatbot thông minh.
         </p>
-        <div className="flex justify-center gap-4">
-          <Link to="/majors" className="btn-primary text-base px-6 py-3">Khám phá ngành học</Link>
-          <Link to="/chat" className="btn-secondary text-base px-6 py-3">Tư vấn với AI</Link>
-        </div>
       </section>
 
       {/* Features */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {[
-          { icon: '📚', title: 'Tra cứu ngành học', desc: 'Xem thông tin chi tiết về ngành học, điểm chuẩn, chỉ tiêu tuyển sinh.', link: '/majors' },
-          { icon: '🏫', title: 'Tìm trường đại học', desc: 'Danh sách các trường đại học với thông tin tuyển sinh đầy đủ.', link: '/universities' },
-          { icon: '🤖', title: 'Tư vấn AI 24/7', desc: 'Chat với AI để được tư vấn ngành học phù hợp theo điểm số và sở thích.', link: '/chat' },
+          { title: 'Tra cứu ngành học', desc: 'Xem thông tin chi tiết về ngành học, điểm chuẩn, chỉ tiêu tuyển sinh.', link: '/majors' },
+          { title: 'Tìm trường đại học', desc: 'Danh sách các trường đại học với thông tin tuyển sinh đầy đủ.', link: '/universities' },
+          { title: 'Tư vấn AI chatbot', desc: 'Chat với AI để được tư vấn ngành học phù hợp theo điểm số và sở thích.', link: '/chat' },
         ].map((f) => (
           <Link key={f.title} to={f.link} className="card hover:shadow-md transition-shadow text-center">
-            <div className="text-4xl mb-3">{f.icon}</div>
             <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
             <p className="text-gray-500 text-sm">{f.desc}</p>
           </Link>

@@ -18,3 +18,4 @@ class Major(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     university: Mapped["University"] = relationship("University", back_populates="majors")
+    registrations: Mapped[list["MajorRegistration"]] = relationship("MajorRegistration", back_populates="major")

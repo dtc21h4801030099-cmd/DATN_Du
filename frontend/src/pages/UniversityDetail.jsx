@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
 export default function UniversityDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [uni, setUni] = useState(null)
   const [majors, setMajors] = useState([])
 
   useEffect(() => {
-    api.get(`/universities/${id}`).then((r) => setUni(r.data)).catch(() => {})
+    api.get(`/universities/${id}`).then((r) => setUni(r.data)).catch(() => navigate('/universities', { replace: true }))
     api.get(`/majors?university_id=${id}`).then((r) => setMajors(r.data)).catch(() => {})
   }, [id])
 
@@ -20,10 +21,10 @@ export default function UniversityDetail() {
 
       <div className="card mb-6">
         <h1 className="text-2xl font-bold mb-2">{uni.name}</h1>
-        {uni.address && <p className="text-gray-500 mb-1">📍 {uni.address}</p>}
+        {uni.address && <p className="text-gray-500 mb-1">{uni.address}</p>}
         {uni.website && (
           <a href={uni.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
-            🌐 {uni.website}
+            {uni.website}
           </a>
         )}
         {uni.description && <p className="text-gray-600 mt-4 leading-relaxed">{uni.description}</p>}

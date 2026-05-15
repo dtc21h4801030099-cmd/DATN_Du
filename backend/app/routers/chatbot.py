@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.deps import get_db, get_current_user, require_admin
+from app.core.limiter import limiter
 from app.models.user import User
 from app.models.chat import ChatHistory
 from app.schemas.chat import ChatRequest, ChatResponse, ChatHistoryOut
@@ -12,7 +13,9 @@ router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit("10/minute")
 def chat(
+    request: Request,
     payload: ChatRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

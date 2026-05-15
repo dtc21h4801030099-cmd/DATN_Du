@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.deps import get_db, require_admin
+from app.core.security import hash_password
 from app.models.user import User
-from app.schemas.user import UserOut
+from app.schemas.user import UserOut, AdminPasswordReset
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - Users"])
 
@@ -46,3 +47,18 @@ def toggle_lock(
     db.commit()
     action = "khóa" if user.is_locked else "mở khóa"
     return {"message": f"Đã {action} tài khoản thành công", "is_locked": user.is_locked}
+
+
+@router.put("/{user_id}/password")
+def reset_user_password(
+    user_id: int,
+    payload: AdminPasswordReset,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    user = db.query(User).filter(User.id == user_id, User.role == "user").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    user.password_hash = hash_password(payload.new_password)
+    db.commit()
+    return {"message": "Đặt lại mật khẩu thành công"}

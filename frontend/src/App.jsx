@@ -43,9 +43,9 @@ export default function App() {
           {/* Public layout — dùng Outlet thay vì nested <Routes> */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/home" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
             <Route path="/majors" element={<Majors />} />
             <Route path="/majors/:id" element={<MajorDetail />} />
             <Route path="/universities" element={<Universities />} />

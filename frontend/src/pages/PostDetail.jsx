@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 
 const typeLabel = { news: 'Tin tức', notice: 'Thông báo' }
@@ -10,31 +10,20 @@ const typeBadge = {
 
 export default function PostDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     api
       .get(`/posts/${id}`)
       .then((r) => setPost(r.data))
-      .catch((err) => {
-        if (err.response?.status === 404) setNotFound(true)
-      })
+      .catch(() => navigate('/posts', { replace: true }))
       .finally(() => setLoading(false))
   }, [id])
 
   if (loading) {
     return <p className="text-gray-400 text-center py-16">Đang tải...</p>
-  }
-
-  if (notFound || !post) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-gray-500 mb-4">Không tìm thấy bài viết.</p>
-        <Link to="/posts" className="btn-primary">Quay lại danh sách</Link>
-      </div>
-    )
   }
 
   return (
