@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Môi trường — chứa API key, không được commit
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Hệ thống
+.DS_Store
+Thumbs.db
