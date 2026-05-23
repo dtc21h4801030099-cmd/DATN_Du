@@ -13,21 +13,42 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (form.password !== form.confirm) {
+    const full_name = form.full_name.trim()
+    const email = form.email.trim()
+    const phone = form.phone.trim()
+    const password = form.password.trim()
+    const confirm = form.confirm.trim()
+    if (password.length < 5) {
+      setError('Mật khẩu phải có ít nhất 5 ký tự')
+      return
+    }
+    if (/[^\x00-\x7F]/.test(password)) {
+      setError('Mật khẩu không được chứa ký tự có dấu')
+      return
+    }
+    if (/\s/.test(password)) {
+      setError('Mật khẩu không được chứa dấu cách')
+      return
+    }
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      setError('Mật khẩu phải có ít nhất 1 ký tự đặc biệt')
+      return
+    }
+    if (password !== confirm) {
       setError('Mật khẩu xác nhận không khớp')
       return
     }
-    if (form.phone && !/^0\d{9}$/.test(form.phone)) {
+    if (phone && !/^0\d{9}$/.test(phone)) {
       setError('Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0')
       return
     }
     setLoading(true)
     try {
       await api.post('/auth/register', {
-        full_name: form.full_name,
-        email: form.email,
-        phone: form.phone || undefined,
-        password: form.password,
+        full_name,
+        email,
+        phone: phone || undefined,
+        password,
       })
       navigate('/login')
     } catch (err) {

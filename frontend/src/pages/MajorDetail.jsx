@@ -186,7 +186,7 @@ export default function MajorDetail() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Điểm thi dự kiến</label>
+                      <label className="block text-sm font-medium mb-1">Điểm xét tuyển cá nhân</label>
                       <input
                         type="number"
                         step="0.25"

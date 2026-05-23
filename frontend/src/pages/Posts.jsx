@@ -15,23 +15,42 @@ const typeBadge = {
 }
 
 export default function Posts() {
-  const [posts, setPosts] = useState([])
+  const [allPosts, setAllPosts] = useState([])
   const [tab, setTab] = useState('')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
     api
-      .get('/posts', { params: tab ? { post_type: tab } : {} })
-      .then((r) => setPosts(r.data))
+      .get('/posts')
+      .then((r) => setAllPosts(r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [tab])
+  }, [])
+
+  const filtered = allPosts.filter((p) => {
+    const matchTab = !tab || p.type === tab
+    const matchSearch = !search || p.title.toLowerCase().includes(search.toLowerCase())
+    return matchTab && matchSearch
+  })
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Thông báo & Tin tức tuyển sinh</h1>
 
+      {/* Tìm kiếm */}
+      <div className="mb-4">
+        <input
+          type="text"
+          className="input-field w-full"
+          placeholder="Tìm kiếm theo tiêu đề..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {TABS.map((t) => (
           <button
@@ -50,11 +69,13 @@ export default function Posts() {
 
       {loading ? (
         <p className="text-gray-400 text-center py-12">Đang tải...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-gray-400 text-center py-12">Chưa có bài viết nào.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-gray-400 text-center py-12">
+          {search ? `Không tìm thấy bài viết nào với tiêu đề "${search}".` : 'Chưa có bài viết nào.'}
+        </p>
       ) : (
         <div className="space-y-3">
-          {posts.map((p) => (
+          {filtered.map((p) => (
             <Link
               key={p.id}
               to={`/posts/${p.id}`}

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
+from datetime import date
 
 from app.core.deps import get_db, get_current_user, require_admin
 from app.core.limiter import limiter
@@ -39,6 +41,19 @@ def my_chat_history(
         .limit(50)
         .all()
     )
+
+
+@router.get("/admin/stats")
+def chat_stats(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    total = db.query(func.count(ChatHistory.id)).scalar()
+    today = db.query(func.count(ChatHistory.id)).filter(
+        func.date(ChatHistory.created_at) == date.today()
+    ).scalar()
+    unique_users = db.query(func.count(func.distinct(ChatHistory.user_id))).scalar()
+    return {"total": total, "today": today, "unique_users": unique_users}
 
 
 @router.get("/admin/history", response_model=List[ChatHistoryOut])

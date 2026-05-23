@@ -11,6 +11,7 @@ export default function AdminUniversities() {
   const [showForm, setShowForm] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
 
   const fetchAll = () => {
     api.get('/universities').then((r) => setUnis(r.data)).catch(() => {})
@@ -48,6 +49,11 @@ export default function AdminUniversities() {
 
   const uniMajors = viewing ? majors.filter((m) => m.university_id === viewing.id) : []
 
+  const filteredUnis = unis.filter((u) => {
+    const q = search.toLowerCase()
+    return !q || u.name.toLowerCase().includes(q) || (u.address || '').toLowerCase().includes(q)
+  })
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -78,8 +84,22 @@ export default function AdminUniversities() {
         </div>
       )}
 
+      <div className="relative mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
+        <input
+          className="input-field pl-9"
+          placeholder="Tìm theo tên trường hoặc địa chỉ..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       <div className="space-y-3">
-        {unis.map((u) => (
+        {filteredUnis.length === 0 ? (
+          <p className="text-center text-gray-400 py-10">Không tìm thấy trường nào phù hợp.</p>
+        ) : filteredUnis.map((u) => (
           <div key={u.id} className="card flex justify-between items-center">
             <div
               className="flex-1 cursor-pointer hover:text-blue-600 transition-colors"

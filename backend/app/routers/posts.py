@@ -11,10 +11,12 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("", response_model=List[PostOut])
-def list_posts(post_type: str | None = None, db: Session = Depends(get_db)):
+def list_posts(post_type: str | None = None, search: str | None = None, db: Session = Depends(get_db)):
     query = db.query(Post)
     if post_type:
         query = query.filter(Post.type == post_type)
+    if search:
+        query = query.filter(Post.title.ilike(f"%{search}%"))
     return query.order_by(Post.published_at.desc()).all()
 
 

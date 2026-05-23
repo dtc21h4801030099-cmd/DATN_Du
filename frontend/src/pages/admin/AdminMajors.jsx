@@ -44,6 +44,8 @@ export default function AdminMajors() {
   const [registrations, setRegistrations] = useState([])
   const [regLoading, setRegLoading] = useState(false)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [filterUni, setFilterUni] = useState('')
 
   const fetchAll = () => {
     api.get('/majors').then((r) => setMajors(r.data)).catch(() => {})
@@ -115,8 +117,18 @@ export default function AdminMajors() {
     fetchAll()
   }
 
-  // Tổng số đăng ký đang chờ duyệt trên toàn hệ thống
   const totalPending = Object.values(counts).reduce((sum, c) => sum + (c.pending || 0), 0)
+
+  const filtered = majors.filter((m) => {
+    const q = search.toLowerCase()
+    const matchSearch = !q ||
+      m.name.toLowerCase().includes(q) ||
+      (m.university_name || '').toLowerCase().includes(q) ||
+      (m.code || '').toLowerCase().includes(q) ||
+      (m.subject_group || '').toLowerCase().includes(q)
+    const matchUni = !filterUni || String(m.university_id) === filterUni
+    return matchSearch && matchUni
+  })
 
   return (
     <div>
@@ -176,6 +188,28 @@ export default function AdminMajors() {
         </div>
       )}
 
+      <div className="flex gap-3 mb-4">
+        <div className="relative flex-1">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
+          <input
+            className="input-field pl-9"
+            placeholder="Tìm theo tên ngành, mã ngành, khối thi..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="input-field w-52"
+          value={filterUni}
+          onChange={(e) => setFilterUni(e.target.value)}
+        >
+          <option value="">Tất cả trường</option>
+          {unis.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+        </select>
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
@@ -186,7 +220,11 @@ export default function AdminMajors() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {majors.map((m) => (
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center text-gray-400 py-10">Không tìm thấy ngành học nào phù hợp.</td>
+              </tr>
+            ) : filtered.map((m) => (
               <tr
                 key={m.id}
                 className="hover:bg-blue-50 cursor-pointer transition-colors"

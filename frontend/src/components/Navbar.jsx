@@ -20,7 +20,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6 text-sm">
           <Link to="/majors" className="hover:text-blue-200 transition-colors">Ngành học</Link>
           <Link to="/universities" className="hover:text-blue-200 transition-colors">Trường Đại học</Link>
-          <Link to="/posts" className="hover:text-blue-200 transition-colors">Thông báo</Link>
+          <Link to="/posts" className="hover:text-blue-200 transition-colors">Nội dung</Link>
 
           {user ? (
             <>

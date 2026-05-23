@@ -35,13 +35,31 @@ function UserDetailModal({ userId, onClose, onToggleLock }) {
     e.preventDefault()
     setPwError('')
     setPwSuccess('')
-    if (pwForm.new_password !== pwForm.confirm_password) {
+    const newPassword = pwForm.new_password.trim()
+    const confirmPassword = pwForm.confirm_password.trim()
+    if (newPassword.length < 5) {
+      setPwError('Mật khẩu phải có ít nhất 5 ký tự')
+      return
+    }
+    if (/[^\x00-\x7F]/.test(newPassword)) {
+      setPwError('Mật khẩu không được chứa ký tự có dấu')
+      return
+    }
+    if (/\s/.test(newPassword)) {
+      setPwError('Mật khẩu không được chứa dấu cách')
+      return
+    }
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      setPwError('Mật khẩu phải có ít nhất 1 ký tự đặc biệt')
+      return
+    }
+    if (newPassword !== confirmPassword) {
       setPwError('Mật khẩu xác nhận không khớp')
       return
     }
     setPwLoading(true)
     try {
-      await api.put(`/admin/users/${userId}/password`, { new_password: pwForm.new_password })
+      await api.put(`/admin/users/${userId}/password`, { new_password: newPassword })
       setPwSuccess('Đặt lại mật khẩu thành công!')
       setPwForm({ new_password: '', confirm_password: '' })
     } catch (err) {

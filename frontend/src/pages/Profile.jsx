@@ -134,15 +134,34 @@ export default function Profile() {
     e.preventDefault()
     setPwError('')
     setPwSuccess('')
-    if (pwForm.new_password !== pwForm.confirm_password) {
+    const oldPassword = pwForm.old_password.trim()
+    const newPassword = pwForm.new_password.trim()
+    const confirmPassword = pwForm.confirm_password.trim()
+    if (newPassword.length < 5) {
+      setPwError('Mật khẩu phải có ít nhất 5 ký tự')
+      return
+    }
+    if (/[^\x00-\x7F]/.test(newPassword)) {
+      setPwError('Mật khẩu không được chứa ký tự có dấu')
+      return
+    }
+    if (/\s/.test(newPassword)) {
+      setPwError('Mật khẩu không được chứa dấu cách')
+      return
+    }
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      setPwError('Mật khẩu phải có ít nhất 1 ký tự đặc biệt')
+      return
+    }
+    if (newPassword !== confirmPassword) {
       setPwError('Mật khẩu xác nhận không khớp')
       return
     }
     setPwLoading(true)
     try {
       await api.put('/auth/me/password', {
-        old_password: pwForm.old_password,
-        new_password: pwForm.new_password,
+        old_password: oldPassword,
+        new_password: newPassword,
       })
       setPwSuccess('Đổi mật khẩu thành công!')
       setPwForm({ old_password: '', new_password: '', confirm_password: '' })
@@ -174,6 +193,11 @@ export default function Profile() {
     e.preventDefault()
     setError('')
     const { dob_day, dob_month, dob_year } = form
+    const dobFilledCount = [dob_day, dob_month, dob_year].filter(Boolean).length
+    if (dobFilledCount > 0 && dobFilledCount < 3) {
+      setError('Vui lòng chọn đầy đủ ngày, tháng và năm sinh')
+      return
+    }
     if (dob_year && dob_month && dob_day) {
       const d = parseInt(dob_day), m = parseInt(dob_month), y = parseInt(dob_year)
       const checked = new Date(y, m - 1, d)
@@ -182,18 +206,22 @@ export default function Profile() {
         return
       }
     }
+    if (form.phone && !/^0[0-9]{9}$/.test(form.phone)) {
+      setError('Số điện thoại không hợp lệ (phải gồm 10 chữ số, bắt đầu bằng 0)')
+      return
+    }
     setLoading(true)
     try {
       const date_of_birth = (dob_year && dob_month && dob_day)
         ? `${dob_year}-${String(dob_month).padStart(2, '0')}-${String(dob_day).padStart(2, '0')}`
         : null
       const payload = {
-        full_name: form.full_name || null,
-        phone: form.phone || null,
+        full_name: form.full_name.trim() || null,
+        phone: form.phone.trim() || null,
         date_of_birth,
         gender: form.gender || null,
-        address: form.address || null,
-        interests: form.interests || null,
+        address: form.address.trim() || null,
+        interests: form.interests.trim() || null,
       }
       await api.put('/auth/me', payload)
 
@@ -330,8 +358,6 @@ export default function Profile() {
                     type="tel" name="phone" className="input-field"
                     value={form.phone} onChange={handleChange}
                     placeholder="0xxxxxxxxx" maxLength={10}
-                    pattern="^0[0-9]{9}$"
-                    title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0"
                   />
                 </div>
                 <div>

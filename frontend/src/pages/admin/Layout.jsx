@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 const links = [
-  { to: '/admin', label: 'Tổng quan', end: true },
+  { to: '/admin', label: 'Trang chủ', end: true },
   { to: '/admin/users', label: 'Thí sinh' },
   { to: '/admin/majors', label: 'Ngành học' },
   { to: '/admin/universities', label: 'Trường Đại học' },

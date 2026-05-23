@@ -7,6 +7,8 @@ export default function AdminChatbot() {
   const [tab, setTab] = useState('stats')
 
   // --- History & Stats ---
+  const [stats, setStats] = useState({ total: 0, today: 0, unique_users: 0 })
+  const [allHistory, setAllHistory] = useState([])
   const [history, setHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [filterUserId, setFilterUserId] = useState('')
@@ -19,8 +21,9 @@ export default function AdminChatbot() {
   const [faqError, setFaqError] = useState('')
 
   useEffect(() => {
+    api.get('/chatbot/admin/stats').then((r) => setStats(r.data)).catch(() => {})
     api.get('/chatbot/admin/history')
-      .then((r) => setHistory(r.data))
+      .then((r) => { setHistory(r.data); setAllHistory(r.data) })
       .catch(() => {})
       .finally(() => setHistoryLoading(false))
     api.get('/faq').then((r) => setFaqs(r.data)).catch(() => {})
@@ -36,19 +39,23 @@ export default function AdminChatbot() {
   }
 
   const handleUserFilter = (e) => {
-    const val = e.target.value
-    setFilterUserId(val)
-    fetchHistory(val)
+    const raw = e.target.value
+    const num = parseInt(raw, 10)
+    if (raw === '' || num <= 0) {
+      setFilterUserId('')
+      fetchHistory('')
+    } else {
+      setFilterUserId(String(num))
+      fetchHistory(String(num))
+    }
   }
 
-  // --- Stats computed from history ---
-  const today = new Date().toDateString()
-  const totalMessages = history.length
-  const todayMessages = history.filter((h) => new Date(h.created_at).toDateString() === today).length
-  const uniqueUsers = [...new Set(history.map((h) => h.user_id))]
+  // --- Stats computed from unfiltered allHistory ---
+  const uniqueUsers = [...new Set(allHistory.map((h) => h.user_id))]
+  const totalMessages = allHistory.length
   const userMsgCount = uniqueUsers.map((uid) => ({
     uid,
-    count: history.filter((h) => h.user_id === uid).length,
+    count: allHistory.filter((h) => h.user_id === uid).length,
   })).sort((a, b) => b.count - a.count).slice(0, 5)
 
   // --- FAQ handlers ---
@@ -85,7 +92,6 @@ export default function AdminChatbot() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Quản lý AI Chatbot</h1>
-      <p className="text-gray-500 text-sm mb-5">Model: <strong>Gemini 2.5 Flash</strong> — Context tự động từ ngành học, trường ĐH và FAQ</p>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b">
@@ -109,15 +115,15 @@ export default function AdminChatbot() {
         <div>
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-blue-600">{totalMessages}</p>
+              <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
               <p className="text-sm text-gray-500 mt-1">Tổng hội thoại</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-green-600">{todayMessages}</p>
+              <p className="text-3xl font-bold text-green-600">{stats.today}</p>
               <p className="text-sm text-gray-500 mt-1">Hôm nay</p>
             </div>
             <div className="card text-center">
-              <p className="text-3xl font-bold text-purple-600">{uniqueUsers.length}</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.unique_users}</p>
               <p className="text-sm text-gray-500 mt-1">Người dùng đã chat</p>
             </div>
           </div>
@@ -129,7 +135,7 @@ export default function AdminChatbot() {
             ) : (
               <div className="space-y-3">
                 {userMsgCount.map(({ uid, count }, idx) => {
-                  const pct = Math.round((count / totalMessages) * 100)
+                  const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0
                   return (
                     <div key={uid}>
                       <div className="flex justify-between text-sm mb-1">
@@ -170,6 +176,7 @@ export default function AdminChatbot() {
               type="number"
               className="input-field w-40"
               placeholder="Tất cả"
+              min="1"
               value={filterUserId}
               onChange={handleUserFilter}
             />

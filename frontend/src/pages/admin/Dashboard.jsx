@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Tổng quan hệ thống</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Trang chủ</h1>
         <p className="text-sm text-gray-400 mt-1">Thống kê dữ liệu hiện tại trong hệ thống DUTA</p>
       </div>
 
@@ -59,22 +59,6 @@ export default function AdminDashboard() {
             <p className="text-xs opacity-70 mt-0.5">{c.sub}</p>
           </Link>
         ))}
-      </div>
-
-      {/* Quick actions */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-3">Truy cập nhanh</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {QUICK_LINKS.map((q) => (
-            <Link
-              key={q.label}
-              to={q.link}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-colors ${q.color}`}
-            >
-              <span>{q.label}</span>
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   )

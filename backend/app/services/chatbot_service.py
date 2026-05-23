@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from google import genai
 from google.genai import types
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.models.chat import ChatHistory
@@ -16,13 +19,23 @@ Phần "CÂU HỎI THƯỜNG GẶP (FAQ)" trong dữ liệu bên dưới là n�
 - Khi câu hỏi của người dùng khớp hoặc tương tự với bất kỳ câu hỏi nào trong FAQ, BẮT BUỘC trả lời đúng theo nội dung FAQ đó, không được từ chối hay thay thế bằng câu trả lời khác.
 - Quy tắc từ chối câu hỏi off-topic KHÔNG áp dụng khi đã có FAQ tương ứng.
 
+=== PHẠM VI TƯ VẤN (trong phạm vi — PHẢI trả lời) ===
+Các loại câu hỏi sau ĐỀU thuộc phạm vi tư vấn tuyển sinh, KHÔNG được từ chối:
+- Thông tin ngành học, trường đại học, điểm chuẩn, chỉ tiêu tuyển sinh
+- Định hướng ngành học dựa trên năng lực, môn học giỏi, sở thích (ví dụ: "giỏi toán nên học ngành gì", "thích công nghệ nên chọn trường nào")
+- Tư vấn chọn ngành dựa trên điểm thi, khối thi, tổ hợp môn
+- Triển vọng nghề nghiệp, cơ hội việc làm của các ngành học
+- Quy trình, thủ tục đăng ký xét tuyển đại học
+- So sánh các ngành học, trường đại học
+- Bất kỳ câu hỏi nào liên quan đến việc lựa chọn con đường học tập sau cấp 3
+
 === QUY TẮC CHUNG ===
 1. Ưu tiên 1: Trả lời theo FAQ nếu câu hỏi khớp với FAQ.
 2. Ưu tiên 2: Trả lời dựa vào dữ liệu ngành học, trường đại học bên dưới nếu câu hỏi liên quan đến tuyển sinh.
-3. Ưu tiên 3: Nếu câu hỏi ngoài phạm vi tuyển sinh VÀ không có FAQ tương ứng, từ chối lịch sự và hướng người dùng quay lại chủ đề tuyển sinh.
-4. KHÔNG tạo ra hình ảnh, âm thanh hay nội dung đa phương tiện.
-5. LUÔN trả lời bằng văn bản tiếng Việt, ngắn gọn và thân thiện.
-6. Nếu thông tin không có trong dữ liệu và không có FAQ, có thể dùng kiến thức chung về tuyển sinh Việt Nam nhưng cần nêu rõ là thông tin tham khảo.
+3. Ưu tiên 3: Nếu thông tin không có trong dữ liệu, dùng kiến thức chung về tuyển sinh Việt Nam và ghi chú "đây là thông tin tham khảo chung, bạn nên xác nhận lại với nhà trường".
+4. Ưu tiên 4: Chỉ từ chối khi câu hỏi hoàn toàn không liên quan đến học tập, ngành nghề, hay tuyển sinh (ví dụ: nấu ăn, thể thao, giải trí...).
+5. KHÔNG tạo ra hình ảnh, âm thanh hay nội dung đa phương tiện.
+6. LUÔN trả lời bằng văn bản tiếng Việt, thân thiện và đầy đủ thông tin.
 
 === DỮ LIỆU HỆ THỐNG ===
 {context}
@@ -101,13 +114,18 @@ def chat_with_ai(db: Session, user_id: int, message: str) -> ChatHistory:
                 model="gemini-2.5-flash",
                 config=types.GenerateContentConfig(
                     system_instruction=system,
-                    max_output_tokens=1024,
+                    max_output_tokens=2048,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
                 contents=message,
             )
-            answer = response.text or OFF_TOPIC_REPLY
-        except Exception:
-            answer = OFF_TOPIC_REPLY
+            try:
+                answer = response.text or OFF_TOPIC_REPLY
+            except ValueError:
+                answer = OFF_TOPIC_REPLY
+        except Exception as e:
+            logger.error("Gemini API error [%s]: %s", type(e).__name__, e)
+            answer = "Xin lỗi, hệ thống tạm thời gặp sự cố kỹ thuật. Vui lòng thử lại sau."
 
     record = ChatHistory(
         user_id=user_id,

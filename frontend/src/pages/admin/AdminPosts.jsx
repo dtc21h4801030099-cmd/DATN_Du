@@ -4,14 +4,16 @@ import api from '../../api/axios'
 const empty = { title: '', content: '', type: 'news' }
 
 export default function AdminPosts() {
-  const [posts, setPosts] = useState([])
+  const [allPosts, setAllPosts] = useState([])
+  const [search, setSearch] = useState('')
+  const [tabFilter, setTabFilter] = useState('')
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [error, setError] = useState('')
 
-  const fetchPosts = () => api.get('/posts').then((r) => setPosts(r.data)).catch(() => {})
+  const fetchPosts = () => api.get('/posts').then((r) => setAllPosts(r.data)).catch(() => {})
   useEffect(() => { fetchPosts() }, [])
 
   const openCreate = () => { setForm(empty); setEditing(null); setShowForm(true); setError('') }
@@ -44,11 +46,49 @@ export default function AdminPosts() {
     news: 'bg-blue-100 text-blue-700',
   }
 
+  const TABS = [
+    { key: '', label: 'Tất cả' },
+    { key: 'notice', label: 'Thông báo' },
+    { key: 'news', label: 'Tin tức' },
+  ]
+
+  const posts = allPosts.filter((p) => {
+    const matchTab = !tabFilter || p.type === tabFilter
+    const matchSearch = !search || p.title.toLowerCase().includes(search.toLowerCase())
+    return matchTab && matchSearch
+  })
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý bài viết</h1>
         <button onClick={openCreate} className="btn-primary">+ Thêm bài viết</button>
+      </div>
+
+      {/* Tìm kiếm & lọc */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          type="text"
+          className="input-field flex-1"
+          placeholder="Tìm kiếm theo tiêu đề..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="flex gap-2">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTabFilter(t.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                tabFilter === t.key
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showForm && (
