@@ -6,6 +6,8 @@ venv/
 
 # Môi trường — chứa API key, không được commit
 backend/.env
+backend/.env.prod
+backend/.env.*
 
 # Frontend
 frontend/node_modules/
@@ -14,3 +16,6 @@ frontend/dist/
 # Hệ thống
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/
