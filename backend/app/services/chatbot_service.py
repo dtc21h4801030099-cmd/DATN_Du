@@ -1,8 +1,10 @@
 import logging
+import os
+import requests as http_requests
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
-from google import genai
-from google.genai import types
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request as AuthRequest
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,23 @@ OFF_TOPIC_REPLY = (
     "điểm chuẩn các trường, hoặc định hướng nghề nghiệp."
 )
 
+_sa_credentials = None
+
+
+def _get_credentials():
+    global _sa_credentials
+    creds_file = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", settings.GOOGLE_APPLICATION_CREDENTIALS)
+    )
+    if _sa_credentials is None:
+        _sa_credentials = service_account.Credentials.from_service_account_file(
+            creds_file,
+            scopes=["https://www.googleapis.com/auth/generative-language"],
+        )
+    if not _sa_credentials.valid:
+        _sa_credentials.refresh(AuthRequest())
+    return _sa_credentials
+
 
 def _build_context(db: Session) -> str:
     universities = db.query(University).all()
@@ -57,7 +76,6 @@ def _build_context(db: Session) -> str:
 
     lines = []
 
-    # FAQ đặt ĐẦU TIÊN — ưu tiên cao nhất
     if faqs:
         lines.append("=== CÂU HỎI THƯỜNG GẶP DO ADMIN CẤU HÌNH (ƯU TIÊN CAO NHẤT) ===")
         lines.append("Lưu ý: Khi người dùng hỏi câu hỏi khớp với bất kỳ mục FAQ nào dưới đây, PHẢI trả lời đúng theo câu trả lời FAQ, không được từ chối.")
@@ -91,7 +109,6 @@ def _build_context(db: Session) -> str:
 
 
 def _find_faq_match(db: Session, message: str) -> str | None:
-    """Tìm FAQ khớp với câu hỏi (so sánh không phân biệt hoa/thường, bỏ khoảng trắng thừa)."""
     normalized = message.strip().lower()
     faqs = db.query(FAQ).all()
     for faq in faqs:
@@ -100,29 +117,33 @@ def _find_faq_match(db: Session, message: str) -> str | None:
     return None
 
 
+def _call_gemini(system: str, message: str) -> str:
+    creds = _get_credentials()
+    payload = {
+        "contents": [{"parts": [{"text": message}]}],
+        "systemInstruction": {"parts": [{"text": system}]},
+        "generationConfig": {"maxOutputTokens": 2048},
+    }
+    resp = http_requests.post(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        headers={"Authorization": f"Bearer {creds.token}"},
+        json=payload,
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
+
+
 def chat_with_ai(db: Session, user_id: int, message: str) -> ChatHistory:
-    # Khớp chính xác FAQ trước — không cần gọi AI
     faq_answer = _find_faq_match(db, message)
     if faq_answer:
         answer = faq_answer
     else:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
         context = _build_context(db)
         system = SYSTEM_PROMPT.format(context=context)
         try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                config=types.GenerateContentConfig(
-                    system_instruction=system,
-                    max_output_tokens=2048,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0),
-                ),
-                contents=message,
-            )
-            try:
-                answer = response.text or OFF_TOPIC_REPLY
-            except ValueError:
-                answer = OFF_TOPIC_REPLY
+            answer = _call_gemini(system, message)
         except Exception as e:
             logger.error("Gemini API error [%s]: %s", type(e).__name__, e)
             answer = "Xin lỗi, hệ thống tạm thời gặp sự cố kỹ thuật. Vui lòng thử lại sau."

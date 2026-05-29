@@ -6,8 +6,12 @@ venv/
 
 # Môi trường — chứa API key, không được commit
 backend/.env
+backend/service_account.json
 backend/.env.prod
-backend/.env.*
+backend/.env.local
+backend/.env.development
+backend/.env.production
+# .env.example được phép commit (chỉ chứa placeholder)
 
 # Frontend
 frontend/node_modules/

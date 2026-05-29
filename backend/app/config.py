@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     GEMINI_API_KEY: str = ""
+    GOOGLE_APPLICATION_CREDENTIALS: str = "service_account.json"
 
     @field_validator("GEMINI_API_KEY", mode="before")
     @classmethod
