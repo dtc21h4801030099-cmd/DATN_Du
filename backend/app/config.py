@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
     GOOGLE_APPLICATION_CREDENTIALS: str = "service_account.json"
+    GOOGLE_CREDENTIALS_JSON: str = ""
 
     @field_validator("GEMINI_API_KEY", mode="before")
     @classmethod

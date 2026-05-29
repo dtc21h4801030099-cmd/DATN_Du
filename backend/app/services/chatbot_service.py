@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import requests as http_requests
@@ -54,14 +55,16 @@ _sa_credentials = None
 
 def _get_credentials():
     global _sa_credentials
-    creds_file = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "..", "..", settings.GOOGLE_APPLICATION_CREDENTIALS)
-    )
     if _sa_credentials is None:
-        _sa_credentials = service_account.Credentials.from_service_account_file(
-            creds_file,
-            scopes=["https://www.googleapis.com/auth/generative-language"],
-        )
+        scopes = ["https://www.googleapis.com/auth/generative-language"]
+        if settings.GOOGLE_CREDENTIALS_JSON:
+            info = json.loads(settings.GOOGLE_CREDENTIALS_JSON)
+            _sa_credentials = service_account.Credentials.from_service_account_info(info, scopes=scopes)
+        else:
+            creds_file = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", settings.GOOGLE_APPLICATION_CREDENTIALS)
+            )
+            _sa_credentials = service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
     if not _sa_credentials.valid:
         _sa_credentials.refresh(AuthRequest())
     return _sa_credentials
