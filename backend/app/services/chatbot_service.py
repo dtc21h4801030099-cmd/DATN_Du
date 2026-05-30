@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone, timedelta
+from types import SimpleNamespace
 
 import requests as http_requests
 from sqlalchemy.orm import Session
@@ -65,7 +66,7 @@ def _refresh_if_stale(db: Session) -> None:
     faqs = db.query(FAQ).order_by(FAQ.created_at.desc()).all()
     universities = db.query(University).all()
     majors = db.query(Major).all()
-    _cache["faqs"] = faqs
+    _cache["faqs"] = [SimpleNamespace(question=f.question, answer=f.answer) for f in faqs]
     _cache["context"] = _build_context_from_data(faqs, universities, majors)
     _cache["expires_at"] = now + _CACHE_TTL
 
