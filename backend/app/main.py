@@ -61,6 +61,6 @@ app.include_router(faq.router, prefix="/api")
 app.include_router(registrations.router, prefix="/api")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "DUTA API đang chạy", "docs": "/docs"}
