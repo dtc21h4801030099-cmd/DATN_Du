@@ -23,3 +23,8 @@ Thumbs.db
 
 # Editor
 .claude/
+
+# Tài liệu không liên quan đến source code
+backend/Claude.md
+*.docx
+*.doc

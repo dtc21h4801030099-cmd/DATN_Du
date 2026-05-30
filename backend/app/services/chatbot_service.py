@@ -1,8 +1,9 @@
 import json
 import logging
 import os
+from datetime import datetime, timezone, timedelta
+
 import requests as http_requests
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request as AuthRequest
@@ -50,33 +51,27 @@ OFF_TOPIC_REPLY = (
     "điểm chuẩn các trường, hoặc định hướng nghề nghiệp."
 )
 
-_sa_credentials = None
+# ── In-memory cache ──────────────────────────────────────────────────────────
+# Dữ liệu FAQ, trường, ngành thay đổi ít nên cache 5 phút để tránh
+# truy vấn database lặp lại mỗi lần có tin nhắn chat.
+_CACHE_TTL = timedelta(minutes=5)
+_cache: dict = {"faqs": None, "context": None, "expires_at": None}
 
 
-def _get_credentials():
-    global _sa_credentials
-    if _sa_credentials is None:
-        scopes = ["https://www.googleapis.com/auth/generative-language"]
-        if settings.GOOGLE_CREDENTIALS_JSON:
-            info = json.loads(settings.GOOGLE_CREDENTIALS_JSON)
-            _sa_credentials = service_account.Credentials.from_service_account_info(info, scopes=scopes)
-        else:
-            creds_file = os.path.normpath(
-                os.path.join(os.path.dirname(__file__), "..", "..", settings.GOOGLE_APPLICATION_CREDENTIALS)
-            )
-            _sa_credentials = service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
-    if not _sa_credentials.valid:
-        _sa_credentials.refresh(AuthRequest())
-    return _sa_credentials
-
-
-def _build_context(db: Session) -> str:
+def _refresh_if_stale(db: Session) -> None:
+    now = datetime.now(timezone.utc)
+    if _cache["expires_at"] is not None and now < _cache["expires_at"]:
+        return
+    faqs = db.query(FAQ).order_by(FAQ.created_at.desc()).all()
     universities = db.query(University).all()
     majors = db.query(Major).all()
-    faqs = db.query(FAQ).order_by(FAQ.created_at.desc()).all()
+    _cache["faqs"] = faqs
+    _cache["context"] = _build_context_from_data(faqs, universities, majors)
+    _cache["expires_at"] = now + _CACHE_TTL
 
+
+def _build_context_from_data(faqs, universities, majors) -> str:
     uni_map = {u.id: u.name for u in universities}
-
     lines = []
 
     if faqs:
@@ -111,21 +106,37 @@ def _build_context(db: Session) -> str:
     return "\n".join(lines)
 
 
-def _find_faq_match(db: Session, message: str) -> str | None:
-    normalized = message.strip().lower()
-    faqs = db.query(FAQ).all()
-    for faq in faqs:
-        if faq.question.strip().lower() == normalized:
-            return faq.answer
-    return None
+# ── Google credentials ────────────────────────────────────────────────────────
+_sa_credentials = None
 
 
+def _get_credentials():
+    global _sa_credentials
+    if _sa_credentials is None:
+        scopes = ["https://www.googleapis.com/auth/generative-language"]
+        if settings.GOOGLE_CREDENTIALS_JSON:
+            info = json.loads(settings.GOOGLE_CREDENTIALS_JSON)
+            _sa_credentials = service_account.Credentials.from_service_account_info(info, scopes=scopes)
+        else:
+            creds_file = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", settings.GOOGLE_APPLICATION_CREDENTIALS)
+            )
+            _sa_credentials = service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
+    if not _sa_credentials.valid:
+        _sa_credentials.refresh(AuthRequest())
+    return _sa_credentials
+
+
+# ── Gemini API call ───────────────────────────────────────────────────────────
 def _call_gemini(system: str, message: str) -> str:
     creds = _get_credentials()
     payload = {
         "contents": [{"parts": [{"text": message}]}],
         "systemInstruction": {"parts": [{"text": system}]},
-        "generationConfig": {"maxOutputTokens": 2048},
+        "generationConfig": {
+            "maxOutputTokens": 2048,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     resp = http_requests.post(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
@@ -138,13 +149,21 @@ def _call_gemini(system: str, message: str) -> str:
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
+# ── Main service function ─────────────────────────────────────────────────────
 def chat_with_ai(db: Session, user_id: int, message: str) -> ChatHistory:
-    faq_answer = _find_faq_match(db, message)
-    if faq_answer:
-        answer = faq_answer
-    else:
-        context = _build_context(db)
-        system = SYSTEM_PROMPT.format(context=context)
+    # Đảm bảo cache dữ liệu còn mới (tối đa 1 lần truy vấn DB mỗi 5 phút)
+    _refresh_if_stale(db)
+
+    # Kiểm tra khớp FAQ từ cache — không gọi Gemini nếu tìm thấy
+    normalized = message.strip().lower()
+    answer = None
+    for faq in (_cache["faqs"] or []):
+        if faq.question.strip().lower() == normalized:
+            answer = faq.answer
+            break
+
+    if answer is None:
+        system = SYSTEM_PROMPT.format(context=_cache["context"])
         try:
             answer = _call_gemini(system, message)
         except Exception as e:
