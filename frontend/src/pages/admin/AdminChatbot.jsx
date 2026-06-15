@@ -12,6 +12,9 @@ export default function AdminChatbot() {
   const [history, setHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [filterUserId, setFilterUserId] = useState('')
+  const [topQuestions, setTopQuestions] = useState([])
+  const [topQDate, setTopQDate] = useState('')
+  const [topQLoading, setTopQLoading] = useState(false)
 
   // --- FAQ ---
   const [faqs, setFaqs] = useState([])
@@ -27,6 +30,7 @@ export default function AdminChatbot() {
       .catch(() => {})
       .finally(() => setHistoryLoading(false))
     api.get('/faq').then((r) => setFaqs(r.data)).catch(() => {})
+    api.get('/chatbot/admin/top-questions').then((r) => setTopQuestions(r.data)).catch(() => {})
   }, [])
 
   const fetchHistory = (uid = filterUserId) => {
@@ -48,6 +52,15 @@ export default function AdminChatbot() {
       setFilterUserId(String(num))
       fetchHistory(String(num))
     }
+  }
+
+  const fetchTopQuestions = (d = topQDate) => {
+    setTopQLoading(true)
+    const params = d ? `?filter_date=${d}` : ''
+    api.get(`/chatbot/admin/top-questions${params}`)
+      .then((r) => setTopQuestions(r.data))
+      .catch(() => {})
+      .finally(() => setTopQLoading(false))
   }
 
   // --- Stats computed from unfiltered allHistory ---
@@ -154,6 +167,45 @@ export default function AdminChatbot() {
                   )
                 })}
               </div>
+            )}
+          </div>
+
+          <div className="card mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Top 10 câu hỏi được hỏi nhiều nhất</h3>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  className="input-field py-1 text-sm"
+                  value={topQDate}
+                  onChange={(e) => { setTopQDate(e.target.value); fetchTopQuestions(e.target.value) }}
+                />
+                {topQDate && (
+                  <button
+                    className="btn-secondary text-sm py-1"
+                    onClick={() => { setTopQDate(''); fetchTopQuestions('') }}
+                  >
+                    Xóa lọc
+                  </button>
+                )}
+              </div>
+            </div>
+            {topQLoading ? (
+              <p className="text-gray-400 text-sm italic">Đang tải...</p>
+            ) : topQuestions.length === 0 ? (
+              <p className="text-gray-400 text-sm italic">Chưa có dữ liệu</p>
+            ) : (
+              <ol className="space-y-2">
+                {topQuestions.map(({ message, count }, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm">
+                    <span className="w-5 shrink-0 font-bold text-blue-500">{idx + 1}.</span>
+                    <span className="flex-1 text-gray-700">{message}</span>
+                    <span className="shrink-0 font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                      {count} lần
+                    </span>
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
 

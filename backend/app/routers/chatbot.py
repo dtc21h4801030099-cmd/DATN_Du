@@ -56,6 +56,27 @@ def chat_stats(
     return {"total": total, "today": today, "unique_users": unique_users}
 
 
+@router.get("/admin/top-questions")
+def top_questions(
+    filter_date: date | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    query = db.query(
+        ChatHistory.message,
+        func.count(ChatHistory.id).label("count"),
+    )
+    if filter_date:
+        query = query.filter(func.date(ChatHistory.created_at) == filter_date)
+    results = (
+        query.group_by(ChatHistory.message)
+        .order_by(func.count(ChatHistory.id).desc())
+        .limit(10)
+        .all()
+    )
+    return [{"message": r.message, "count": r.count} for r in results]
+
+
 @router.get("/admin/history", response_model=List[ChatHistoryOut])
 def all_chat_history(
     user_id: int | None = None,
