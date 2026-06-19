@@ -83,13 +83,14 @@ def question_answers(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
+    trimmed = func.trim(ChatHistory.response)
     results = (
         db.query(
-            ChatHistory.response,
+            trimmed.label("response"),
             func.count(ChatHistory.id).label("count"),
         )
         .filter(ChatHistory.message == message)
-        .group_by(ChatHistory.response)
+        .group_by(trimmed)
         .order_by(func.count(ChatHistory.id).desc())
         .all()
     )
