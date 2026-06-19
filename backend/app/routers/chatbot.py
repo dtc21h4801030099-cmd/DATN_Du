@@ -83,18 +83,20 @@ def question_answers(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    trimmed = func.trim(ChatHistory.response)
     results = (
-        db.query(
-            trimmed.label("response"),
-            func.count(ChatHistory.id).label("count"),
-        )
+        db.query(ChatHistory.response, func.count(ChatHistory.id).label("count"))
         .filter(ChatHistory.message == message)
-        .group_by(trimmed)
-        .order_by(func.count(ChatHistory.id).desc())
+        .group_by(ChatHistory.response)
         .all()
     )
-    return [{"response": r.response, "count": r.count} for r in results]
+    merged: dict[str, int] = {}
+    for r in results:
+        key = r.response.strip()
+        merged[key] = merged.get(key, 0) + r.count
+    return [
+        {"response": resp, "count": cnt}
+        for resp, cnt in sorted(merged.items(), key=lambda x: x[1], reverse=True)
+    ]
 
 
 @router.get("/admin/history", response_model=List[ChatHistoryOut])
