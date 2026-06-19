@@ -16,6 +16,13 @@ export default function AdminChatbot() {
   const [topQDate, setTopQDate] = useState('')
   const [topQLoading, setTopQLoading] = useState(false)
 
+  // --- Question Detail Modal ---
+  const [selectedQuestion, setSelectedQuestion] = useState(null)
+  const [questionAnswers, setQuestionAnswers] = useState([])
+  const [answersLoading, setAnswersLoading] = useState(false)
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [addFaqStatus, setAddFaqStatus] = useState('')
+
   // --- FAQ ---
   const [faqs, setFaqs] = useState([])
   const [faqForm, setFaqForm] = useState(emptyFaq)
@@ -51,6 +58,29 @@ export default function AdminChatbot() {
     } else {
       setFilterUserId(String(num))
       fetchHistory(String(num))
+    }
+  }
+
+  const handleQuestionClick = (message) => {
+    setSelectedQuestion(message)
+    setSelectedAnswer(null)
+    setAddFaqStatus('')
+    setAnswersLoading(true)
+    api.get(`/chatbot/admin/question-answers?message=${encodeURIComponent(message)}`)
+      .then((r) => setQuestionAnswers(r.data))
+      .catch(() => setQuestionAnswers([]))
+      .finally(() => setAnswersLoading(false))
+  }
+
+  const handleAddToFaqFromModal = async () => {
+    if (!selectedAnswer) return
+    setAddFaqStatus('loading')
+    try {
+      await api.post('/faq', { question: selectedQuestion, answer: selectedAnswer })
+      setAddFaqStatus('success')
+      fetchFaqs()
+    } catch {
+      setAddFaqStatus('error')
     }
   }
 
@@ -195,11 +225,15 @@ export default function AdminChatbot() {
             ) : topQuestions.length === 0 ? (
               <p className="text-gray-400 text-sm italic">Chưa có dữ liệu</p>
             ) : (
-              <ol className="space-y-2">
+              <ol className="space-y-1">
                 {topQuestions.map(({ message, count }, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm">
+                  <li
+                    key={idx}
+                    className="flex items-start gap-3 text-sm cursor-pointer rounded-lg px-2 py-1.5 hover:bg-blue-50 transition-colors group"
+                    onClick={() => handleQuestionClick(message)}
+                  >
                     <span className="w-5 shrink-0 font-bold text-blue-500">{idx + 1}.</span>
-                    <span className="flex-1 text-gray-700">{message}</span>
+                    <span className="flex-1 text-gray-700 group-hover:text-blue-700">{message}</span>
                     <span className="shrink-0 font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full text-xs">
                       {count} lần
                     </span>
@@ -345,6 +379,94 @@ export default function AdminChatbot() {
               ))}
             </div>
           )}
+        </div>
+      )}
+      {/* ===== MODAL: CHI TIẾT CÂU HỎI ===== */}
+      {selectedQuestion && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedQuestion(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between p-5 border-b gap-4">
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Câu hỏi</p>
+                <p className="font-semibold text-gray-900">{selectedQuestion}</p>
+              </div>
+              <button
+                onClick={() => setSelectedQuestion(null)}
+                className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 p-5">
+              {answersLoading ? (
+                <p className="text-gray-400 text-sm italic text-center py-8">Đang tải câu trả lời...</p>
+              ) : questionAnswers.length === 0 ? (
+                <p className="text-gray-400 text-sm italic text-center py-8">Chưa có câu trả lời nào được ghi nhận.</p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-gray-600 mb-3">
+                    Chọn 1 câu trả lời để thêm vào FAQ
+                    <span className="ml-2 text-gray-400 font-normal">({questionAnswers.length} câu trả lời duy nhất)</span>
+                  </p>
+                  <div className="space-y-3">
+                    {questionAnswers.map((a, idx) => (
+                      <label
+                        key={idx}
+                        className={`flex gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedAnswer === a.response
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="answer"
+                          className="mt-1 shrink-0 accent-blue-600"
+                          checked={selectedAnswer === a.response}
+                          onChange={() => { setSelectedAnswer(a.response); setAddFaqStatus('') }}
+                        />
+                        <p className="flex-1 text-sm text-gray-700 whitespace-pre-wrap min-w-0">{a.response}</p>
+                        <span className="shrink-0 self-start text-xs font-semibold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                          {a.count} lần
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-5 border-t flex items-center gap-3">
+              {addFaqStatus === 'success' && (
+                <span className="text-green-600 text-sm font-medium">Đã thêm vào FAQ thành công!</span>
+              )}
+              {addFaqStatus === 'error' && (
+                <span className="text-red-600 text-sm font-medium">Lỗi khi lưu, vui lòng thử lại.</span>
+              )}
+              <div className="ml-auto flex gap-2">
+                <button className="btn-secondary" onClick={() => setSelectedQuestion(null)}>Đóng</button>
+                <button
+                  className="btn-primary"
+                  disabled={!selectedAnswer || addFaqStatus === 'loading' || addFaqStatus === 'success'}
+                  onClick={handleAddToFaqFromModal}
+                >
+                  {addFaqStatus === 'loading' ? 'Đang lưu...' : '+ Thêm vào FAQ'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

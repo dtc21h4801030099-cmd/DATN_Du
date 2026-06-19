@@ -77,6 +77,25 @@ def top_questions(
     return [{"message": r.message, "count": r.count} for r in results]
 
 
+@router.get("/admin/question-answers")
+def question_answers(
+    message: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    results = (
+        db.query(
+            ChatHistory.response,
+            func.count(ChatHistory.id).label("count"),
+        )
+        .filter(ChatHistory.message == message)
+        .group_by(ChatHistory.response)
+        .order_by(func.count(ChatHistory.id).desc())
+        .all()
+    )
+    return [{"response": r.response, "count": r.count} for r in results]
+
+
 @router.get("/admin/history", response_model=List[ChatHistoryOut])
 def all_chat_history(
     user_id: int | None = None,
