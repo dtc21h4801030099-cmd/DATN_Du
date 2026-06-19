@@ -37,34 +37,34 @@ export default function Posts() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Thông báo & Tin tức tuyển sinh</h1>
+      <div className="sticky top-16 z-10 bg-gray-50 pb-3">
+        <h1 className="text-2xl font-bold mb-4">Thông báo & Tin tức tuyển sinh</h1>
 
-      {/* Tìm kiếm */}
-      <div className="mb-4">
-        <input
-          type="text"
-          className="input-field w-full"
-          placeholder="Tìm kiếm theo tiêu đề..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="input-field w-full"
+            placeholder="Tìm kiếm theo tiêu đề..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              tab === t.key
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        <div className="flex gap-2">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                tab === t.key
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

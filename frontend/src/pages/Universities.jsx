@@ -21,21 +21,23 @@ export default function Universities() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Tra cứu trường đại học</h1>
+      <div className="sticky top-16 z-10 bg-gray-50 pb-3">
+        <h1 className="text-2xl font-bold mb-4">Tra cứu trường đại học</h1>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); fetchUnis(search) }}
-        className="flex gap-2 mb-6"
-      >
-        <input
-          type="text"
-          className="input-field flex-1"
-          placeholder="Tìm kiếm tên trường..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button type="submit" className="btn-primary">Tìm kiếm</button>
-      </form>
+        <form
+          onSubmit={(e) => { e.preventDefault(); fetchUnis(search) }}
+          className="flex gap-2"
+        >
+          <input
+            type="text"
+            className="input-field flex-1"
+            placeholder="Tìm kiếm tên trường..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button type="submit" className="btn-primary">Tìm kiếm</button>
+        </form>
+      </div>
 
       {loading ? (
         <div className="text-center py-12 text-gray-400">Đang tải...</div>

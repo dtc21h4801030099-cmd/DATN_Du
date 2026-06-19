@@ -11,7 +11,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-blue-700 text-white shadow-md">
+    <nav className="bg-blue-700 text-white shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to={user ? '/home' : '/login'} className="text-xl font-bold tracking-wide">
           DUTA
