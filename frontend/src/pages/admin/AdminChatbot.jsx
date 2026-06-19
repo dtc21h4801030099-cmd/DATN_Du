@@ -134,10 +134,11 @@ export default function AdminChatbot() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Quản lý AI Chatbot</h1>
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-2">
+        <h1 className="text-2xl font-bold mb-1">Quản lý AI Chatbot</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b">
+      <div className="flex gap-1 mb-2 border-b">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -151,6 +152,7 @@ export default function AdminChatbot() {
             {t.label}
           </button>
         ))}
+      </div>
       </div>
 
       {/* ===== TAB: THỐNG KÊ ===== */}

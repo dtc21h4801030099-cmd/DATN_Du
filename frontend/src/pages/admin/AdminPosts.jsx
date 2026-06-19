@@ -60,13 +60,15 @@ export default function AdminPosts() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý bài viết</h1>
-        <button onClick={openCreate} className="btn-primary">+ Thêm bài viết</button>
-      </div>
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Quản lý bài viết</h1>
+          <button onClick={openCreate} className="btn-primary">+ Thêm bài viết</button>
+        </div>
 
-      {/* Tìm kiếm & lọc */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        {/* Tìm kiếm & lọc */}
+        <div className="flex flex-col sm:flex-row gap-3">
+
         <input
           type="text"
           className="input-field flex-1"
@@ -88,6 +90,7 @@ export default function AdminPosts() {
               {t.label}
             </button>
           ))}
+        </div>
         </div>
       </div>
 

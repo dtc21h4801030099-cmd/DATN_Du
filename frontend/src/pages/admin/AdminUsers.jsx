@@ -284,9 +284,9 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Quản lý thí sinh</h1>
-
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-4">
+        <h1 className="text-2xl font-bold mb-4">Quản lý thí sinh</h1>
+        <form onSubmit={handleSearch} className="flex gap-2">
         <input
           type="text"
           className="input-field flex-1"
@@ -307,6 +307,7 @@ export default function AdminUsers() {
           </button>
         )}
       </form>
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm flex justify-between">

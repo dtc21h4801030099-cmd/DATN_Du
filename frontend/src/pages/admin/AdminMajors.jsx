@@ -132,20 +132,44 @@ export default function AdminMajors() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="text-2xl font-bold">Quản lý ngành học</h1>
-          {totalPending > 0 && (
-            <p className="text-sm text-yellow-700 mt-1">
-              Có <span className="font-bold">{totalPending}</span> đăng ký đang chờ duyệt
-            </p>
-          )}
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Quản lý ngành học</h1>
+            {totalPending > 0 && (
+              <p className="text-sm text-yellow-700 mt-1">
+                Có <span className="font-bold">{totalPending}</span> đăng ký đang chờ duyệt
+              </p>
+            )}
+          </div>
+          <button onClick={openCreate} className="btn-primary">+ Thêm ngành</button>
         </div>
-        <button onClick={openCreate} className="btn-primary">+ Thêm ngành</button>
+
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <input
+              className="input-field pl-9"
+              placeholder="Tìm theo tên ngành, mã ngành, khối thi..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <select
+            className="input-field w-52"
+            value={filterUni}
+            onChange={(e) => setFilterUni(e.target.value)}
+          >
+            <option value="">Tất cả trường</option>
+            {unis.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        </div>
       </div>
 
       {showForm && (
-        <div className="card mb-6">
+        <div className="card mb-6 mt-4">
           <h2 className="font-semibold mb-4">{editing ? 'Sửa ngành học' : 'Thêm ngành mới'}</h2>
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-3 text-sm">{error}</div>}
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
@@ -188,29 +212,7 @@ export default function AdminMajors() {
         </div>
       )}
 
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-          </svg>
-          <input
-            className="input-field pl-9"
-            placeholder="Tìm theo tên ngành, mã ngành, khối thi..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <select
-          className="input-field w-52"
-          value={filterUni}
-          onChange={(e) => setFilterUni(e.target.value)}
-        >
-          <option value="">Tất cả trường</option>
-          {unis.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-        </select>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-4">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
