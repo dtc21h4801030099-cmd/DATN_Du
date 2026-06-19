@@ -56,7 +56,7 @@ export default function AdminUniversities() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-4">
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-8 pb-4">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Quản lý trường đại học</h1>
           <button onClick={openCreate} className="btn-primary">+ Thêm trường</button>

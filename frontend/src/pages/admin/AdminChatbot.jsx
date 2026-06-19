@@ -134,7 +134,7 @@ export default function AdminChatbot() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-4 pb-2">
+      <div className="sticky top-0 z-10 bg-gray-100 -mx-8 px-8 pt-8 pb-2">
         <h1 className="text-2xl font-bold mb-1">Quản lý AI Chatbot</h1>
 
       {/* Tabs */}
